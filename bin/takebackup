@@ -4,17 +4,10 @@
 #
 
 CLOUDSDK_PYTHON=/usr/bin/python3
-BUCKET=${BUCKET:-}
-if [ -z ${BUCKET} ]; then
-  echo "BUCKET is missing."
-  exit
-fi
 
-DB_DIR=${DB_DIR:-}
-if [ -z ${DB_DIR} ]; then
-  echo "DB_DIR is missing."
-  exit
-fi
+BUCKET=${BUCKET:-gs://re-global-prod-db/kubegres}
+DB_DIR=${DB_DIR:-$PGDATA/..}
+
 base_bucket="${BUCKET}/base"
 wal_bucket="${BUCKET}/wal"
 wal_dir="${DB_DIR}/backup/wal"
