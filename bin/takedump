@@ -1,0 +1,49 @@
+#!/bin/bash
+#
+# Script for taking postgresql database dump and copy to GS bucket.
+#
+
+CLOUDSDK_PYTHON=/usr/bin/python
+BUCKET=${BUCKET:-}
+if [ -z ${BUCKET} ]; then
+  echo "BUCKET is missing."
+  exit
+fi
+
+DB_DIR=${DB_DIR:-}
+if [ -z ${DB_DIR} ]; then
+  echo "DB_DIR is missing."
+  exit
+fi
+
+dumpdir=${DB_DIR}/backup/dump
+
+date=$(date +%Y%m%d%H%M%S%Z)
+bucket_dir=${BUCKET}/dump/
+for db in wfb-prod n2r-prod coaching rex-prod wmapi-prod
+do
+  dir=${dumpdir}/${db}/${date}
+  mkdir -p ${dir} \
+    && pg_dump -x -O -Fd -d ${db} -j 4 -f ${dir} \
+    && gsutil -m cp -r ${dir} ${bucket_dir}/${db}/${date}
+
+  # remove old dump directories
+  find ${dumpdir}/${db} -maxdepth 1 -type d -ctime +3 -name '20*' -print0 | xargs -r0 rm -rf --
+done
+
+# cleanup bucket
+declare -A dbs
+dbs=( [coaching]=15 [turtle-prod]=90 [n2r-prod]=90 [rex-prod]=90 [wfb-prod]=90 [wmapi-prod]=90 )
+
+for db in "${!dbs[@]}"; do
+  gsutil ls ${bucket_dir}/${db} | sort | head -n -${dbs[$db]}| xargs -r gsutil -m rm -r
+done
+
+
+# turtle
+db="turtle-prod"
+dir=${dumpdir}/${db}/${date}
+mkdir -p ${dir} \
+  && pg_dump -x -O -Fd -N export -T commands -d ${db} -j 4 -f ${dir} \
+  && gsutil -m cp -r ${dir} ${bucket_dir}/${db}/${date}
+find ${dumpdir}/${db} -maxdepth 1 -type d -ctime +3 -name '20*' -print0 | xargs -r0 rm -rf --

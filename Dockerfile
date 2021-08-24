@@ -13,5 +13,7 @@ RUN \
   apt-get update && apt-get install -y google-cloud-sdk && \
   rm -rf /var/lib/apt/lists/*
 
+ADD bin /usr/local/bin
+
 EXPOSE 5432
 CMD ["postgres"]

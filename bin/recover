@@ -1,0 +1,28 @@
+#!/bin/bash
+#
+# Script for taking basebackup of postgresql cluster and copy to GS bucket.
+#
+
+CLOUDSDK_PYTHON=/usr/bin/python3
+
+BUCKET=${BUCKET:-}
+if [ -z ${BUCKET} ]; then
+  echo "BUCKET is missing."
+  exit
+fi
+
+DB_DIR=${DB_DIR:-}
+if [ -z ${DB_DIR} ]; then
+  echo "DB_DIR is missing."
+  exit
+fi
+
+BACKUP_DIR=${DB_DIR}/backup
+mkdir -p $BACKUP_DIR
+
+BASE=$(gsutil ls $BUCKET/base|sort|tail -1)
+gsutil -m rsync $BASE $BACKUP_DIR/base
+gsutil -m rsync -x "2021*" $BUCKET/wal $BACKUP_DIR/wal
+
+[ -f $DB_DIR/postgresql.conf ] || echo -e "port = 5434\nrestore_command = 'gunzip < /var/lib/postgres/data/backup/wal/%f > %p'\nrecovery_target_action=pause" > $DB_DIR/postgresql.conf
+[ -f $DB_DIR/pg_hba.conf ] || echo -e "port = 5434\nrestore_command = 'gunzip < /var/lib/postgres/data/backup/wal/%f > %p'\nrecovery_target_action=pause" > $DB_DIR/postgresql.conf
