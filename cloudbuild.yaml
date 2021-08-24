@@ -1,0 +1,10 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['pull', '${_DOCKER_REPO}:latest']
+
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '.', '-f', 'Dockerfile', '-t', '${_DOCKER_REPO}:$COMMIT_SHA', '-t', '${_DOCKER_REPO}:latest']
+
+images:
+- '${_DOCKER_REPO}:$COMMIT_SHA'
+- '${_DOCKER_REPO}:latest'
