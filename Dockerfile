@@ -4,7 +4,7 @@ FROM postgres:13.4
 RUN \
   apt-get update && \
   apt-get install -y \
-          cron vim curl tmux
+          cron vim curl tmux htop pgtop procps postgresql-13-cron postgresql-13-partman
 
 # gsutil with Google Cloud SDK
 RUN \
