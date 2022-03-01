@@ -1,6 +1,5 @@
-FROM postgres:13.4
+FROM postgres:13.6
 
-# Apache and PHP 5.6
 RUN \
   apt-get update && \
   apt-get install -y \
