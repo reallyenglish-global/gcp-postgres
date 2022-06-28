@@ -4,8 +4,8 @@ steps:
   args: ['-c', 'docker pull ${_DOCKER_REPO} || exit 0']
 
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '.', '--cache-from', '${_DOCKER_REPO}:latest', '-f', 'Dockerfile', '-t', '${_DOCKER_REPO}:$COMMIT_SHA', '-t', '${_DOCKER_REPO}:latest']
+  args: ['build', '.', '--cache-from', '${_DOCKER_REPO}:latest', '-f', 'Dockerfile', '-t', '${_DOCKER_REPO}:$SHORT_SHA', '-t', '${_DOCKER_REPO}:latest']
 
 images:
-- '${_DOCKER_REPO}:$COMMIT_SHA'
+- '${_DOCKER_REPO}:$SHORT_SHA'
 - '${_DOCKER_REPO}:latest'
