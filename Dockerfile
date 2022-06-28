@@ -1,10 +1,9 @@
-FROM postgres:13.4
+FROM postgres:14.4
 
-# Apache and PHP 5.6
 RUN \
   apt-get update && \
   apt-get install -y \
-          cron vim curl tmux htop pgtop procps postgresql-13-cron postgresql-13-partman
+          cron vim curl tmux htop pgtop procps postgresql-14-cron postgresql-14-partman
 
 # gsutil with Google Cloud SDK
 RUN \
