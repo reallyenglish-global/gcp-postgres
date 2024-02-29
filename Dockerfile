@@ -1,9 +1,9 @@
-FROM postgres:16.0
+FROM postgres:16.2
 
 RUN \
   apt-get update && \
   apt-get install -y \
-          cron vim curl tmux htop pgtop procps postgresql-15-cron postgresql-15-partman
+          cron vim curl tmux htop pgtop procps postgresql-16-cron postgresql-16-partman
 
 # gsutil with Google Cloud SDK
 RUN \
