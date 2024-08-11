@@ -1,9 +1,6 @@
 #!/bin/bash
 
-if [ -z "$ARCHIVE_PATH" ]; then
-  echo "ARCHIVE_PATH is not set."
-  exit 1
-fi
+ARCHIVE_PATH=${ARCHIVE_PATH:-${PGDATA}/..}
 
 archive_wal() {
   local wal_file="$1"  # WAL file path
