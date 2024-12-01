@@ -1,4 +1,4 @@
-FROM postgres:16.4
+FROM postgres:16.6
 
 RUN \
   apt-get update && \
