@@ -11,18 +11,22 @@ DB_DIR=${DB_DIR:-$PGDATA/..}
 base_bucket="${BUCKET}/base"
 wal_bucket="${BUCKET}/wal"
 wal_dir="${DB_DIR}/backup/wal"
+mkdir -p $wal_dir
 
 name=$(date +%Y%m%d%H%M%S%Z)
 basedir="${DB_DIR}/backup/base"
 dir="${basedir}/${name}"
+mkdir -p $dir
+
 pg_basebackup -z -Ft -R -X stream -c fast -l ${name} -D ${dir}
 
 # wal archive
 gsutil -m mv $wal_bucket/000000* ${wal_bucket}/${name}
 
 # remove old wal files of last week
-WAL_BACKUP_DIR="/mnt/disks/backup/pgdata0/wal"
+WAL_BACKUP_DIR="${PGDATA}/../wal"
 OLDEST_BASE_BACKUP=$(basename $(find ${WAL_BACKUP_DIR} -type f -iname "*.backup" -mtime -3 -print0 | xargs -0 ls -t | tail -n 1))
+
 pg_archivecleanup -d $WAL_BACKUP_DIR $OLDEST_BASE_BACKUP
 
 # make sure latest full copy
