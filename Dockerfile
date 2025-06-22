@@ -1,4 +1,6 @@
-FROM postgres:17.5-bookworm
+ARG VERSION=17.5
+
+FROM postgres:${VERSION}
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -13,7 +15,7 @@ RUN apt-get update && \
         # Ensure you match the postgresql-xx-extension name to your Postgres version
         postgresql-17-cron \
         postgresql-17-partman \
-        postgresql-17-vector && \
+        postgresql-17-pgvector && \
     rm -rf /var/lib/apt/lists/*
 
 RUN apt-get update && \
