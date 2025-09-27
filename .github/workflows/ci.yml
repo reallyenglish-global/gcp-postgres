@@ -19,6 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         version: ['17.5']
+        version: ['18.0']
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-qemu-action@v2
