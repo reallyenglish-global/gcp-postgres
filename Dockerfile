@@ -12,9 +12,9 @@ RUN apt-get update && \
         htop \
         procps \
         # Ensure you match the postgresql-xx-extension name to your Postgres version
-        postgresql-17-cron \
-        postgresql-17-partman \
-        postgresql-17-pgvector && \
+        postgresql-18-cron \
+        postgresql-18-partman \
+        postgresql-18-pgvector && \
     rm -rf /var/lib/apt/lists/*
 
 RUN apt-get update && \
