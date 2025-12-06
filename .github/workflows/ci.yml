@@ -18,8 +18,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: ['17.5']
-        version: ['18.0']
+        version: ['17.7']
+        version: ['18.1']
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-qemu-action@v2
