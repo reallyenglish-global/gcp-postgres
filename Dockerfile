@@ -1,4 +1,4 @@
-ARG VERSION=18
+ARG VERSION=18.1
 FROM postgres:${VERSION}
 
 ENV DEBIAN_FRONTEND=noninteractive
