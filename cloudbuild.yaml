@@ -1,10 +1,30 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'
   entrypoint: 'bash'
-  args: ['-c', 'docker pull ${_DOCKER_REPO} || exit 0']
+  args: ['-c', 'docker pull ${_DOCKER_REPO}:${_BASE_TAG:-latest} || exit 0']
 
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '.', '--cache-from', '${_DOCKER_REPO}:latest', '-f', 'Dockerfile', '-t', '${_DOCKER_REPO}:$SHORT_SHA', '-t', '${_DOCKER_REPO}:latest']
+  args:
+  - build
+  - '.'
+  - --cache-from
+  - '${_DOCKER_REPO}:${_BASE_TAG:-latest}'
+  - -f
+  - Dockerfile
+  - -t
+  - '${_DOCKER_REPO}:$SHORT_SHA'
+  - -t
+  - '${_DOCKER_REPO}:latest'
+
+- name: 'gcr.io/cloud-builders/docker'
+  entrypoint: 'bash'
+  args:
+  - -c
+  - |
+    if [ -n "${_RELEASE_TAG}" ]; then
+      docker tag ${_DOCKER_REPO}:${SHORT_SHA} ${_DOCKER_REPO}:${_RELEASE_TAG}
+      docker push ${_DOCKER_REPO}:${_RELEASE_TAG}
+    fi
 
 images:
 - '${_DOCKER_REPO}:$SHORT_SHA'
