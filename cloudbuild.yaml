@@ -28,6 +28,8 @@ steps:
     if [ "${_PUSH_BASE_TAG}" = "true" ] && [ -n "${_BASE_TAG}" ]; then
       docker tag ${_DOCKER_REPO}:${SHORT_SHA} ${_DOCKER_REPO}:${_BASE_TAG}
       docker push ${_DOCKER_REPO}:${_BASE_TAG}
+      docker tag ${_DOCKER_REPO}:${SHORT_SHA} ${_DOCKER_REPO}:v${_BASE_TAG}
+      docker push ${_DOCKER_REPO}:v${_BASE_TAG}
     fi
 
 images:
