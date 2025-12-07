@@ -25,6 +25,10 @@ steps:
       docker tag ${_DOCKER_REPO}:${SHORT_SHA} ${_DOCKER_REPO}:${_RELEASE_TAG}
       docker push ${_DOCKER_REPO}:${_RELEASE_TAG}
     fi
+    if [ "${_PUSH_BASE_TAG}" = "true" ] && [ -n "${_BASE_TAG}" ]; then
+      docker tag ${_DOCKER_REPO}:${SHORT_SHA} ${_DOCKER_REPO}:${_BASE_TAG}
+      docker push ${_DOCKER_REPO}:${_BASE_TAG}
+    fi
 
 images:
 - '${_DOCKER_REPO}:$SHORT_SHA'
