@@ -4,7 +4,10 @@ steps:
   args: ['-c', 'docker pull ${_DOCKER_REPO} || exit 0']
 
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '.', '--cache-from', '${_DOCKER_REPO}:latest', '-f', 'Dockerfile', '-t', '${_DOCKER_REPO}:$SHORT_SHA', '-t', '${_DOCKER_REPO}:latest']
+  args: ['build', '.', '--build-arg', 'VERSION=${_BASE_IMAGE_VERSION}', '--cache-from', '${_DOCKER_REPO}:latest', '-f', 'Dockerfile', '-t', '${_DOCKER_REPO}:$SHORT_SHA', '-t', '${_DOCKER_REPO}:latest']
+
+substitutions:
+  _BASE_IMAGE_VERSION: '18.1'
 
 images:
 - '${_DOCKER_REPO}:$SHORT_SHA'
