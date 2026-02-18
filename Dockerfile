@@ -1,9 +1,11 @@
 ARG VERSION=18.1
 FROM postgres:${VERSION}
+ARG VERSION
 
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
+    PG_MAJOR="${VERSION%%.*}" && \
     apt-get install -y --no-install-recommends \
         cron \
         vim \
@@ -11,10 +13,9 @@ RUN apt-get update && \
         tmux \
         htop \
         procps \
-        # Ensure you match the postgresql-xx-extension name to your Postgres version
-        postgresql-17-cron \
-        postgresql-17-partman \
-        postgresql-17-pgvector && \
+        "postgresql-${PG_MAJOR}-cron" \
+        "postgresql-${PG_MAJOR}-partman" \
+        "postgresql-${PG_MAJOR}-pgvector" && \
     rm -rf /var/lib/apt/lists/*
 
 RUN apt-get update && \
