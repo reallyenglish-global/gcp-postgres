@@ -6,6 +6,7 @@ steps:
   - --build-arg=VERSION=${_BASE_IMAGE_VERSION}
   - --destination=${_DOCKER_REPO}:$SHORT_SHA
   - --destination=${_DOCKER_REPO}:latest
+  - --destination=${_DOCKER_REPO}:${_BASE_IMAGE_VERSION}
   - --cache=true
   - --cache-ttl=168h
 
