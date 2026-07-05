@@ -1,0 +1,128 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PGDATA="${PGDATA:-/var/lib/postgresql/data}"
+POSTGRES_DB="${POSTGRES_DB:-postgres}"
+REPLICA_WAL_ERROR_PATTERN="${REPLICA_WAL_ERROR_PATTERN:-could not receive data from WAL stream}"
+RESEED_EXIT_CODE="${RESEED_EXIT_CODE:-1}"
+REPLICA_RESEED_ROLE="${REPLICA_RESEED_ROLE:-auto}"
+
+log() {
+  echo "replica_ready_or_reseed: $*" >&2
+}
+
+die() {
+  log "$*"
+  exit 1
+}
+
+ensure_safe_pgdata() {
+  [[ -n "$PGDATA" ]] || die "PGDATA is empty"
+  [[ "$PGDATA" != "/" ]] || die "refusing to use / as PGDATA"
+  [[ -d "$PGDATA" ]] || die "PGDATA does not exist: $PGDATA"
+}
+
+is_replica() {
+  local state
+  state="$(psql -X -q -A -t -v ON_ERROR_STOP=1 -d "$POSTGRES_DB" -c "select pg_is_in_recovery()")"
+  [[ "$state" == "t" ]]
+}
+
+configured_primary_role() {
+  case "${REPLICA_RESEED_ROLE,,}" in
+    primary | master)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+candidate_log_files() {
+  if [[ -n "${REPLICA_WAL_ERROR_LOG:-}" ]]; then
+    printf '%s\n' "$REPLICA_WAL_ERROR_LOG"
+    return
+  fi
+
+  printf '%s\n' \
+    "$PGDATA/../log/postgresql.log" \
+    "$PGDATA/pg_log/postgresql.log" \
+    "$PGDATA/log/postgresql.log"
+}
+
+has_unrecoverable_wal_error() {
+  local file
+  while IFS= read -r file; do
+    [[ -f "$file" ]] || continue
+    tail -n "${REPLICA_WAL_ERROR_LINES:-500}" "$file" | grep -Fq "$REPLICA_WAL_ERROR_PATTERN" && return 0
+  done < <(candidate_log_files)
+
+  return 1
+}
+
+primary_conninfo_from_config() {
+  local config="$PGDATA/postgresql.auto.conf"
+  [[ -f "$config" ]] || return 1
+
+  sed -n "s/^primary_conninfo[[:space:]]*=[[:space:]]*'\(.*\)'[[:space:]]*$/\1/p" "$config" | tail -n 1
+}
+
+primary_conninfo() {
+  if [[ -n "${PRIMARY_CONNINFO:-}" ]]; then
+    printf '%s\n' "$PRIMARY_CONNINFO"
+    return
+  fi
+
+  primary_conninfo_from_config
+}
+
+stop_postgres() {
+  if pg_ctl status -D "$PGDATA" >/dev/null 2>&1; then
+    pg_ctl stop -D "$PGDATA" -m fast -w
+  else
+    log "postgres is not running; continuing with reseed"
+  fi
+}
+
+clear_pgdata() {
+  ensure_safe_pgdata
+  find "$PGDATA" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
+}
+
+basebackup_from_primary() {
+  local conninfo="$1"
+  pg_basebackup -D "$PGDATA" -R -X stream -c fast -d "$conninfo"
+}
+
+main() {
+  ensure_safe_pgdata
+
+  if configured_primary_role; then
+    log "pod role is ${REPLICA_RESEED_ROLE}; recovery check passes without action"
+    return 0
+  fi
+
+  if ! is_replica; then
+    log "node is primary; recovery check passes without action"
+    return 0
+  fi
+
+  if ! has_unrecoverable_wal_error; then
+    log "replica has no matching WAL stream fatal; recovery check passes"
+    return 0
+  fi
+
+  local conninfo
+  conninfo="$(primary_conninfo || true)"
+  [[ -n "$conninfo" ]] || die "refusing to clear replica without PRIMARY_CONNINFO or primary_conninfo in postgresql.auto.conf"
+
+  log "replica WAL stream is unrecoverable; clearing PGDATA and rebuilding from primary"
+  stop_postgres
+  clear_pgdata
+  basebackup_from_primary "$conninfo"
+  log "replica base backup completed; exiting ${RESEED_EXIT_CODE} so the supervisor can restart postgres"
+  exit "$RESEED_EXIT_CODE"
+}
+
+main "$@"

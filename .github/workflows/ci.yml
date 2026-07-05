@@ -17,8 +17,43 @@ env:
   DOCKER_REPO: ghcr.io/reallyenglish-global/postgres
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install shellcheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+
+      - name: Run shell tests
+        run: bash test/replica_ready_or_reseed_test.sh
+
+      - name: Check shell syntax
+        run: |
+          bash -n \
+            bin/replica_ready_or_reseed \
+            test/replica_ready_or_reseed_test.sh \
+            bin/archive_wal.sh \
+            bin/recover \
+            bin/takebackup \
+            bin/takedump
+
+      - name: Run shellcheck
+        run: |
+          shellcheck \
+            bin/replica_ready_or_reseed \
+            test/replica_ready_or_reseed_test.sh \
+            bin/archive_wal.sh \
+            bin/recover \
+            bin/takebackup \
+            bin/takedump
+
   publish_docker:
     runs-on: ubuntu-latest
+    needs: test
     timeout-minutes: 20
     env:
       BASE_IMAGE_VERSION: ${{ github.event.inputs.base_image_version || vars.BASE_IMAGE_VERSION || '18.1' }}
