@@ -1,4 +1,5 @@
-ARG BASE_IMAGE_VERSION=16.8
+# No implicit production major: all builds must select a release explicitly.
+ARG BASE_IMAGE_VERSION
 FROM postgres:${BASE_IMAGE_VERSION}
 ARG BASE_IMAGE_VERSION
 
