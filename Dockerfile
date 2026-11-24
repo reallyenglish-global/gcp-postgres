@@ -1,11 +1,12 @@
-ARG VERSION=18.1
-FROM postgres:${VERSION}
-ARG VERSION
+ARG BASE_IMAGE_VERSION
+FROM postgres:${BASE_IMAGE_VERSION}
+ARG BASE_IMAGE_VERSION
 
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
-    PG_MAJOR="${VERSION%%.*}" && \
+    PG_MAJOR="${BASE_IMAGE_VERSION%%.*}" && \
+    apt-mark hold "postgresql-${PG_MAJOR}" && \
     apt-get install -y --no-install-recommends \
         cron \
         vim \
@@ -29,9 +30,13 @@ RUN apt-get update && \
     echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" \
     > /etc/apt/sources.list.d/google-cloud-sdk.list && \
     apt-get update && \
-    apt-get install -y --no-install-recommends google-cloud-sdk && \
+    apt-get install -y --no-install-recommends google-cloud-cli && \
+    gsutil version && \
     # Clean up apt cache again
     rm -rf /var/lib/apt/lists/*
+
+# Multi-architecture GHCR builds must verify each platform before export.
+RUN actual="$(postgres --version)" && set -- $actual && test "$3" = "$BASE_IMAGE_VERSION"
 
 ADD bin /usr/local/bin
 
