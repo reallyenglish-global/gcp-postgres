@@ -1,5 +1,15 @@
 # gcp-postgres
 
+## Build a selected PostgreSQL version on GitHub
+
+In **Actions → Build PostgreSQL image → Run workflow**, choose `main` and enter an exact supported major.minor. Leave **Publish** unchecked for a disposable verification build. To publish the verified multi-platform image to `ghcr.io/reallyenglish-global/postgres:<version>`, select **Publish** on `main`; no `latest` tag is moved. For example, to verify only:
+
+```bash
+gh workflow run ci.yml --ref main -f base_image_version=18.7 -f publish=false
+```
+
+Automatic publication on a push to `main` uses the repository variable `BASE_IMAGE_VERSION`; if unset, it is skipped. A version whose upstream image or compatible extension packages are unavailable fails rather than publishing a different binary.
+
 ```bash
 # add tag to current container image
 DOCKER_REPO=asia.gcr.io/re-global-prod/gcp-postgres
