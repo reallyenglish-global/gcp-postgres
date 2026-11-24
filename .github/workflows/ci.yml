@@ -1,4 +1,4 @@
-name: CI
+name: Build PostgreSQL image
 
 on:
   push:
@@ -7,23 +7,37 @@ on:
     inputs:
       base_image_version:
         description: 'Postgres base image version (for example: 18.1)'
-        required: false
-        default: '18.1'
+        required: true
+        type: string
+      publish:
+        description: 'Publish verified version to GHCR (main only)'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
-  packages: write
 
 env:
   DOCKER_REPO: ghcr.io/reallyenglish-global/postgres
 
+  BASE_IMAGE_VERSION: ${{ inputs.base_image_version || vars.BASE_IMAGE_VERSION }}
+
 jobs:
+  verify:
+    if: github.event_name == 'workflow_dispatch' || vars.BASE_IMAGE_VERSION != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and verify the selected version without publishing
+        run: bash ci/build-verified.sh "$BASE_IMAGE_VERSION" "$BASE_IMAGE_VERSION" local/gcp-postgres "$GITHUB_SHA"
   publish_docker:
-    if: github.ref == 'refs/heads/main'
+    needs: verify
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || inputs.publish)
+    permissions:
+      contents: read
+      packages: write
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    env:
-      BASE_IMAGE_VERSION: ${{ github.event.inputs.base_image_version || vars.BASE_IMAGE_VERSION || '18.1' }}
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-qemu-action@v2
