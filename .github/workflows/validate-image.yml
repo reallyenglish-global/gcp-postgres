@@ -11,4 +11,4 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build and check the requested PostgreSQL binary (local runner image only)
-      run: bash ci/build-verified.sh 18.2 18.2 local/gcp-postgres "$GITHUB_SHA"
+      run: bash ci/build-verified.sh 18.7 18.7 local/gcp-postgres "$GITHUB_SHA"
