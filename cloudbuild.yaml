@@ -1,11 +1,10 @@
 steps:
-- name: 'gcr.io/cloud-builders/docker'
-  entrypoint: 'bash'
-  args: ['-c', 'docker pull ${_DOCKER_REPO} || exit 0']
+- name: gcr.io/cloud-builders/docker
+  entrypoint: bash
+  args: [ci/build-verified.sh, '${_BASE_IMAGE_VERSION}', '${_BASE_TAG}', '${_DOCKER_REPO}', '$SHORT_SHA']
 
-- name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '.', '--cache-from', '${_DOCKER_REPO}:latest', '-f', 'Dockerfile', '-t', '${_DOCKER_REPO}:$SHORT_SHA', '-t', '${_DOCKER_REPO}:latest']
-
+# Cloud Build uploads only after the runtime gate succeeds. Promotion of
+# a version to the shared latest tag is a separate release decision.
 images:
 - '${_DOCKER_REPO}:$SHORT_SHA'
-- '${_DOCKER_REPO}:latest'
+- '${_DOCKER_REPO}:${_BASE_TAG}'
